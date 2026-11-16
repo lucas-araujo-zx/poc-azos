@@ -347,6 +347,29 @@ button, .cta { cursor: pointer; }
   background: var(--white);
 }
 
+.case-table td strong { color: var(--ink); font-weight: 600; }
+
+.case-row { cursor: pointer; transition: background-color 0.2s; }
+
+.case-row:hover { background: var(--green-soft); }
+
+.case-row:focus-visible {
+  outline: none;
+  box-shadow: inset 4px 0 0 var(--green);
+}
+
+.case-card {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 4px;
+  padding: 14px 16px;
+  border-left: 4px solid var(--green);
+  background: var(--green-soft);
+}
+
+.case-card strong { color: var(--ink); font-size: 16px; font-weight: 600; }
+.case-card p { margin: 0; color: var(--muted); font-size: 14px; }
+
 .column-table th, .column-table td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--line-soft);
@@ -520,6 +543,32 @@ button, .cta { cursor: pointer; }
 }
 
 .variable-form { display: grid; gap: 14px; margin-top: 18px; }
+
+.variable-section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.variable-section + .variable-section {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.variable-title {
+  width: 100%;
+  padding: 0;
+  margin-bottom: 2px;
+  color: var(--green-dark);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 
 .talk-stage {
   flex: 1 1 auto;

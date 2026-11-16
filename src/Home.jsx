@@ -15,11 +15,11 @@ export function Home({ agentName, onTest, onDispatch, onSignOut }) {
         <p className="home-lead">{agentName}</p>
         <div className="choice-grid">
           <article className="choice-card">
-            <p className="kicker">Bancada</p>
-            <h2>Teste interno</h2>
-            <p>Preencha as variáveis de entrada e converse por voz ou texto. O resultado volta com o ID da conversa.</p>
+            <p className="kicker">Conversa por voz</p>
+            <h2>Casos de uso</h2>
+            <p>Escolha um caso da tabela e converse com a Liz por voz. Cada caso já vem com os dados do cliente preenchidos.</p>
             <button type="button" className="cta" onClick={onTest}>
-              Abrir teste
+              Ver casos
             </button>
           </article>
           <article className="choice-card">

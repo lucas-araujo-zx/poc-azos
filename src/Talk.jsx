@@ -173,6 +173,69 @@ function ConversationResult({ conversationId, result, error, copied, onCopy }) {
   )
 }
 
+// Ordem de leitura do formulário: primeiro a identificação, depois o financeiro.
+const VARIABLE_SECTIONS = [
+  {
+    title: 'Identificação',
+    fields: [
+      'numero_apolice',
+      'nome_completo',
+      'primeiro_nome',
+      'ano_nascimento',
+      'whatsapp_final',
+      'nome_do_corretor',
+      'produtos_da_cobertura',
+      'protegidos',
+      'outra_apolice_atraso',
+    ],
+  },
+  {
+    title: 'Dados financeiros',
+    fields: [
+      'qtd_parcelas_aberto',
+      'parcelas_descricao',
+      'valor_total',
+      'data_limite_pagamento',
+      'forma_pagamento_atual',
+    ],
+  },
+]
+
+const FIELD_LABELS = {
+  numero_apolice: 'Número da apólice',
+  nome_completo: 'Nome completo',
+  primeiro_nome: 'Primeiro nome',
+  ano_nascimento: 'Ano de nascimento',
+  whatsapp_final: 'Final do WhatsApp',
+  nome_do_corretor: 'Nome do corretor',
+  produtos_da_cobertura: 'Produtos da cobertura',
+  protegidos: 'Quem o seguro protege',
+  outra_apolice_atraso: 'Outra apólice em atraso',
+  qtd_parcelas_aberto: 'Parcelas em aberto',
+  parcelas_descricao: 'Detalhe das parcelas',
+  valor_total: 'Valor total em aberto',
+  data_limite_pagamento: 'Data limite para pagamento',
+  forma_pagamento_atual: 'Forma de pagamento atual',
+}
+
+function labelFor(name) {
+  return FIELD_LABELS[name] ?? formatLabel(name)
+}
+
+// Agrupa as variáveis nas seções. Variáveis fora das seções vão para "Outros dados".
+function groupVariables(variables) {
+  const byName = new Map(variables.map((item) => [item.name, item]))
+  const used = new Set()
+  const sections = VARIABLE_SECTIONS.map((section) => {
+    const items = section.fields.map((name) => byName.get(name)).filter(Boolean)
+    items.forEach((item) => used.add(item.name))
+    return { title: section.title, items }
+  })
+  const rest = variables.filter((item) => !used.has(item.name))
+  if (rest.length) sections.push({ title: 'Outros dados', items: rest })
+  return sections.filter((section) => section.items.length)
+}
+
 function VariableForm({ variables, values, onChange, locked }) {
   if (!variables.length) {
     return (
@@ -182,18 +245,24 @@ function VariableForm({ variables, values, onChange, locked }) {
     )
   }
   const missing = variables.filter((item) => !String(values[item.name] ?? '').trim())
+  const sections = groupVariables(variables)
   return (
     <form className="variable-form" onSubmit={(event) => event.preventDefault()}>
-      {variables.map((item) => (
-        <label className="field" key={item.name}>
-          <span>{formatLabel(item.name)}</span>
-          <input
-            value={values[item.name] ?? ''}
-            disabled={locked}
-            placeholder={item.placeholder || 'Preencha para prosseguir'}
-            onChange={(event) => onChange(item.name, event.target.value)}
-          />
-        </label>
+      {sections.map((section) => (
+        <fieldset className="variable-section" key={section.title}>
+          <legend className="variable-title">{section.title}</legend>
+          {section.items.map((item) => (
+            <label className="field" key={item.name}>
+              <span>{labelFor(item.name)}</span>
+              <input
+                value={values[item.name] ?? ''}
+                disabled={locked}
+                placeholder={item.placeholder || 'Preencha para prosseguir'}
+                onChange={(event) => onChange(item.name, event.target.value)}
+              />
+            </label>
+          ))}
+        </fieldset>
       ))}
       {missing.length ? (
         <p className="sheet-alert" role="alert">
@@ -204,7 +273,17 @@ function VariableForm({ variables, values, onChange, locked }) {
   )
 }
 
-export function Talk({ token, agent, variables, onBack, onSignOut }) {
+// Preenche as variáveis do formulário com os valores do caso escolhido.
+function valuesFromCase(variables, caseItem) {
+  const next = {}
+  for (const item of variables) {
+    const value = caseItem?.values?.[item.name]
+    if (value) next[item.name] = String(value)
+  }
+  return next
+}
+
+export function Talk({ token, agent, variables, caseItem = null, onBack, onChangeCase, onSignOut }) {
   const [mode, setMode] = useState('voice')
   const [status, setStatus] = useState('idle')
   const [agentMode, setAgentMode] = useState('listening')
@@ -215,7 +294,7 @@ export function Talk({ token, agent, variables, onBack, onSignOut }) {
   const [result, setResult] = useState(null)
   const [resultError, setResultError] = useState('')
   const [copied, setCopied] = useState(false)
-  const [values, setValues] = useState({})
+  const [values, setValues] = useState(() => valuesFromCase(variables, caseItem))
   const sessionRef = useRef(null)
   const listRef = useRef(null)
   const missing = variables.filter((item) => !String(values[item.name] ?? '').trim())
@@ -429,6 +508,11 @@ export function Talk({ token, agent, variables, onBack, onSignOut }) {
           <p className="talk-user">{agent.name}</p>
         </div>
         <div className="talk-actions">
+          {onChangeCase ? (
+            <button type="button" className="quiet" onClick={onChangeCase}>
+              Trocar caso
+            </button>
+          ) : null}
           <button type="button" className="quiet" onClick={onBack}>
             Início
           </button>
@@ -444,7 +528,18 @@ export function Talk({ token, agent, variables, onBack, onSignOut }) {
         <aside className="client-sheet" aria-label="Variáveis de entrada">
           <p className="kicker">Teste interno</p>
           <h2>Dados da ligação</h2>
-          <p className="sheet-note">Estes campos são as variáveis dinâmicas de entrada do agente.</p>
+          {caseItem ? (
+            <div className="case-card">
+              <p className="kicker">Caso de uso</p>
+              <strong>{caseItem.title}</strong>
+              <p>{caseItem.description}</p>
+            </div>
+          ) : null}
+          <p className="sheet-note">
+            {caseItem
+              ? 'Os dados vêm do caso escolhido. Você pode ajustar antes de iniciar.'
+              : 'Estes campos são as variáveis dinâmicas de entrada do agente.'}
+          </p>
           <VariableForm
             variables={variables}
             values={values}

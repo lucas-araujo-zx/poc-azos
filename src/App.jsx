@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { catalog, clearToken, login, readToken, writeToken } from './api.js'
 import { BatchDetail } from './BatchDetail.jsx'
+import { Cases } from './Cases.jsx'
 import { Disparos } from './Disparos.jsx'
 import { Home } from './Home.jsx'
 import { Login } from './Login.jsx'
@@ -10,6 +11,7 @@ export function App() {
   const [token, setToken] = useState(readToken)
   const [catalogData, setCatalogData] = useState(null)
   const [screen, setScreen] = useState('home')
+  const [caseItem, setCaseItem] = useState(null)
   const [batchId, setBatchId] = useState('')
   const [booting, setBooting] = useState(Boolean(readToken()))
   const [loginError, setLoginError] = useState('')
@@ -63,6 +65,7 @@ export function App() {
     setToken('')
     setCatalogData(null)
     setScreen('home')
+    setCaseItem(null)
     setBatchId('')
   }
 
@@ -70,13 +73,30 @@ export function App() {
     return <Login error={loginError} loading={loginLoading || booting} onSubmit={handleLogin} />
   }
 
+  if (screen === 'cases') {
+    return (
+      <Cases
+        cases={catalogData.cases || []}
+        onOpen={(item) => {
+          setCaseItem(item)
+          setScreen('test')
+        }}
+        onBack={() => setScreen('home')}
+        onSignOut={signOut}
+      />
+    )
+  }
+
   if (screen === 'test') {
     return (
       <Talk
+        key={caseItem?.id ?? 'livre'}
         token={token}
         agent={catalogData.agent}
         variables={catalogData.variables || []}
+        caseItem={caseItem}
         onBack={() => setScreen('home')}
+        onChangeCase={() => setScreen('cases')}
         onSignOut={signOut}
       />
     )
@@ -111,7 +131,7 @@ export function App() {
   return (
     <Home
       agentName={catalogData.agent?.name || 'Liz'}
-      onTest={() => setScreen('test')}
+      onTest={() => setScreen('cases')}
       onDispatch={() => setScreen('dispatch')}
       onSignOut={signOut}
     />

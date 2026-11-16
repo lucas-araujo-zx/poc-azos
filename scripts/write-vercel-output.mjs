@@ -13,6 +13,8 @@ const serverFiles = [
   'conversation.js',
   'sheet.js',
   'variables.js',
+  'casos.js',
+  'casos.csv',
 ]
 
 await rm(output, { recursive: true, force: true })

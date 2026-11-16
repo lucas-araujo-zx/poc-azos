@@ -1,4 +1,5 @@
 import { agentDisplayName, resolveAgent, tokensMatch } from './agents.js'
+import { listCases } from './casos.js'
 import {
   ANALYSIS_GAP_MS,
   ANALYSIS_PAGE,
@@ -115,6 +116,14 @@ async function elevenFetch(env, path, init) {
   }
 }
 
+function safeCases() {
+  try {
+    return listCases()
+  } catch {
+    return []
+  }
+}
+
 async function loadAgent(env, agent) {
   const remote = await elevenFetch(env, `/v1/convai/agents/${agent.id}`)
   if (!remote.ok) return { error: remote }
@@ -173,6 +182,7 @@ export async function dispatchApi({ method, pathname, searchParams, token, body 
         phone: phone.phone,
         phoneError: phone.error,
         criteria: criteriaDefinitions(loaded.agent),
+        cases: safeCases(),
       },
     }
   }
